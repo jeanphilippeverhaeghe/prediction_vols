@@ -113,7 +113,7 @@ def saisie_vol2(request):
             destination = Aeroport_arr, carrier = compa, month = MoisDep, weekday = JourS)
         
         form.fields['Prediction'].label="Prédiction de l'avance/retard de votre vol (en min): " + str(round(pred,2))
-        form.fields['Comment_Prediction'].label="Commentaire sur la prédiction: " + comment_pred
+        form.fields['Comment_Prediction'].label="Commentaire sur la prédiction (plus précise): " + comment_pred
         
     
     # Quoiqu'il arrive, on affiche la page du formulaire.

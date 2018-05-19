@@ -253,7 +253,7 @@ def prediction2(param, coef, intercept, origin = '', destination = '',
     
     print("Prédiction d'avance/retard: ", int(New_ridge.predict(df)[0]), " minutes " )
     
-    return int(New_ridge.predict(df)[0]) , "prédiction sans erreur"
+    return int(New_ridge.predict(df)[0]) , "sans erreur"
     
     
     
