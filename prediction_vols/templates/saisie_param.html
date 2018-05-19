@@ -1,0 +1,10 @@
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'prediction_vols/style.css' %}" />
+
+
+<form action="{% url "saisie_param" %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Enregistrer les parametres de la Régression" />
+</form>
