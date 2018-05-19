@@ -96,24 +96,29 @@ def saisie_vol2(request):
         form.fields['Comment_Prediction'].label="Commentaire sur la prédiction: " + comment_pred
         
         
+
+        ########################
         #Prédiction plus précise
-        if len(Compagnie) == 0:
-            compa = ''
-        else:
-            compa = Compagnie[0]
+        ########################
+        #Si au moins un des paramêtres de précision est non nul, on peut lancer un nouveau Ridge
+        if len(Compagnie) != 0 or len(JourSemaine) != 0 or Aeroport_dep !='' or Aeroport_arr !='' :
+            if len(Compagnie) == 0:
+                compa = ''
+            else:
+                compa = Compagnie[0]
             
-        if len(JourSemaine) == 0:
-            JourS = 0
-        else:
-            JourS = int(JourSemaine[0])
+            if len(JourSemaine) == 0:
+                JourS = 0
+            else:
+                JourS = int(JourSemaine[0])
         
-        from . import Airport_Delay_V1
+            from . import Airport_Delay_V1
+            
+            pred, comment_pred = Airport_Delay_V1.prediction2(param = param, coef = coef, intercept = intercept, origin = Aeroport_dep,
+                destination = Aeroport_arr, carrier = compa, month = MoisDep, weekday = JourS)
         
-        pred, comment_pred = Airport_Delay_V1.prediction2(param = param, coef = coef, intercept = intercept, origin = Aeroport_dep,
-            destination = Aeroport_arr, carrier = compa, month = MoisDep, weekday = JourS)
-        
-        form.fields['Prediction'].label="Prédiction de l'avance/retard de votre vol (en min): " + str(round(pred,2))
-        form.fields['Comment_Prediction'].label="Commentaire sur la prédiction (plus précise): " + comment_pred
+            form.fields['Prediction'].label="Prédiction de l'avance/retard de votre vol (en min): " + str(round(pred,2))
+            form.fields['Comment_Prediction'].label="Commentaire sur la prédiction (plus précise): " + comment_pred
         
     
     # Quoiqu'il arrive, on affiche la page du formulaire.
