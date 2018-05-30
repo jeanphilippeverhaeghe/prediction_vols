@@ -209,19 +209,19 @@ def prediction2(param, coef, intercept, origin = '', destination = '',
     pd.DataFrame.mask = mask
 
     #Filtrage de Fly:
-    if id_origin != 0:
+    if id_origin != 0 and id_origin != None:
         fly = fly.mask('ORIGIN_AIRPORT_ID', id_origin)
 
-    if id_destination != 0 :
+    if id_destination != 0 and id_destination != None :
         fly = fly.mask('DEST_AIRPORT_ID', id_destination)
 
-    if month != 0 :
+    if month != 0 and month != None :
         fly = fly.mask('MONTH', month)
 
-    if weekday != 0 :
+    if weekday != 0 and weekday != None :
         fly = fly.mask('DAY_OF_WEEK', weekday)
 
-    if carrier != '' :
+    if carrier != '' and carrier != None :
         #Détermination de la CIE à partir de UNIQUE_CARRIER
         carrier_num = CIEdf[CIEdf.UNIQUE_CARRIER == carrier]
         carrier_num = carrier_num['CIE'].values[0]
@@ -349,19 +349,19 @@ def prediction3(param, coef, intercept, origin = '', destination = '',
     pd.DataFrame.mask = mask
     
     #Filtrage de Fly:
-    if id_origin != 0:
+    if id_origin != 0 and id_origin != None:
         fly = fly.mask('ORIGIN_AIRPORT_ID', id_origin)
-    
-    if id_destination != 0 :
+
+    if id_destination != 0 and id_destination != None :
         fly = fly.mask('DEST_AIRPORT_ID', id_destination)
-    
-    if month != 0 :
+
+    if month != 0 and month != None :
         fly = fly.mask('MONTH', month)
-    
-    if weekday != 0 :
+
+    if weekday != 0 and weekday != None :
         fly = fly.mask('DAY_OF_WEEK', weekday)
-    
-    if carrier != '' :
+
+    if carrier != '' and carrier != None :
         #Détermination de la CIE à partir de UNIQUE_CARRIER
         carrier_num = CIEdf[CIEdf.UNIQUE_CARRIER == carrier]
         carrier_num = carrier_num['CIE'].values[0]
