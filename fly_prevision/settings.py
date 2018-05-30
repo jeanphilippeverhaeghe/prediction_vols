@@ -25,8 +25,8 @@ SECRET_KEY = 'ypkjb9rs$85=^3rlfct3sl0v^w%^s!v5o=xikm_p9m2+k!++m^'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['prediction-vols-jpv.herokuapp.com']
-#ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = ['prediction-vols-jpv.herokuapp.com']
+ALLOWED_HOSTS = []
 
 
 # Application definition

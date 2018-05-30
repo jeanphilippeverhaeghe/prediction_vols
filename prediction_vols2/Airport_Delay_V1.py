@@ -123,12 +123,15 @@ def AirportCode (df_fly, df_airport, city):
 def prediction2(param, coef, intercept, origin = '', destination = '',
                 carrier = '', month = 0, weekday = 0):
     '''
-    This function allows you to input all of your flight information (no leaks!) and
-    the function will return how late your flight will arrive based on the output from the
-    SGD Regressor.
-
+    This function allows you to input all of your flight information and
+    the function will return how late your flight will arrive based on the output from the 
+    ridge regressor.
+        
     Inputs:
-
+            param = ridge parameters
+            coef = ridge coef
+            intercept = ridge intercept
+        
             Origin (enter this as a city, state combo, or include the airport name (such as Bush
                         or Hobby). This will automatically calculate which airport you meant.
 
@@ -254,3 +257,152 @@ def prediction2(param, coef, intercept, origin = '', destination = '',
     print("Prédiction d'avance/retard: ", int(New_ridge.predict(df)[0]), " minutes " )
 
     return int(New_ridge.predict(df)[0]) , "sans erreur"
+    
+    
+
+def prediction3(param, coef, intercept, origin = '', destination = '', 
+                carrier = '', month = 0, weekday = 0):
+    '''
+    This function allows you to input all of your flight information and
+    the function will return how late your flight will arrive based on the output from the 
+    ridge regressor. Here it make a fit and predict on the matrix
+        
+    Inputs:
+            param = ridge parameters
+            coef = ridge coef
+            intercept = ridge intercept
+        
+            Origin (enter this as a city, state combo, or include the airport name (such as Bush
+                        or Hobby). This will automatically calculate which airport you meant.
+                 
+            Destination (same as Origin, entered as a string)
+                 
+            Carrier (which Airline, use a string to represent the name (such as 'American' or 'United')
+                 
+            Month (the month the flight is scheduled for)
+                 
+            Weekday (Enter number between 1-7) such as 1:'Lundi',2:'Mardi',3:'Mercredi',4:'Jeudi',5:'Vendredi',6:'Samedi',7:'Dimanche'
+                 
+            Available Carriers:
+            'FL':'AirTran airways',
+            'AS':'Alaska airlines',
+            'AA':'American airlines',
+            'DL':'Delta airways',
+            '9E':'Endeavor air',
+            'MQ':'Envoy air',
+            'EV':'ExpressJet airlines',
+            'F9':'Frontier airlines',
+            'HA':'Hawaiian airlines',
+            'B6':'JetBlue airways',
+            'YV':'Mesa airlines',
+            'OO':'SkyWest airlines',
+            'WN':'Southwest airlines',
+            'NK':'Spirit airlines',
+            'UA':'United airlines',
+            'US':'US airways',
+            'VX':'Virgin America
+            
+    Outputs: 
+        int: Estimated delay for the arrival (in minutes, can be negative if the flight is expected to arrive early)
+        text: Status of the estimation
+    '''
+    from sklearn import linear_model
+    
+    col_utiles = ['CARRIER_DELAY','WEATHER_DELAY', 'NAS_DELAY', 'SECURITY_DELAY', 'LATE_AIRCRAFT_DELAY',
+                'MONTH','DAY_OF_MONTH', 'DAY_OF_WEEK','UNIQUE_CARRIER',
+                'ORIGIN_AIRPORT_ID', 'DEST_AIRPORT_ID','CRS_DEP_TIME',
+                'DISTANCE', 'AIR_TIME','CRS_ELAPSED_TIME','ACTUAL_ELAPSED_TIME', 'ARR_DELAY' ]    
+    #Lecture du fichier d'input
+    fly = pd.read_csv('2016_sample_file_Copy2_00.csv', sep=",", encoding='utf_8', low_memory=False,
+                      error_bad_lines=False, usecols = col_utiles)
+    #Et celui des aéroports
+    airport = pd.read_csv('./Dataset_Projet_4/L_AIRPORT_ID.csv', sep=",", encoding='utf_8', low_memory=False, error_bad_lines=False)
+    
+    #Label encoding des cies aériennes
+    Cie = liste_distincte_col(fly,'UNIQUE_CARRIER','|')
+    Cie.sort()
+    from sklearn import preprocessing
+    le = preprocessing.LabelEncoder()
+    le.fit(Cie)
+    fly['CIE'] = le.transform(fly['UNIQUE_CARRIER'])
+
+    #Création d'un df avec la liaison UNIQUE_CARRIER <-> CIE
+    CIEdf = fly[['UNIQUE_CARRIER', 'CIE']].drop_duplicates() # On conserve un exemplaire unique
+
+    #Elimination de la colonne UNIQUE_CARRIER
+    fly.drop(['UNIQUE_CARRIER'], axis=1, inplace= True)
+
+    #Elimination des colonnes Unnamed
+    fly = fly.drop(col_rech_titre(fly, False, "Unnamed"), axis=1)
+    
+    #Recherche du code des aéroports
+    id_origin=0
+    id_destination=0
+    if origin !='':
+        id_origin = AirportCode(fly, airport, origin)
+    if destination !='':
+        id_destination = AirportCode(fly, airport, destination)
+    
+    #Création d'un marsk / filtre
+    def mask(df, key, value):
+        return df[df[key] == value]
+    pd.DataFrame.mask = mask
+    
+    #Filtrage de Fly:
+    if id_origin != 0:
+        fly = fly.mask('ORIGIN_AIRPORT_ID', id_origin)
+    
+    if id_destination != 0 :
+        fly = fly.mask('DEST_AIRPORT_ID', id_destination)
+    
+    if month != 0 :
+        fly = fly.mask('MONTH', month)
+    
+    if weekday != 0 :
+        fly = fly.mask('DAY_OF_WEEK', weekday)
+    
+    if carrier != '' :
+        #Détermination de la CIE à partir de UNIQUE_CARRIER
+        carrier_num = CIEdf[CIEdf.UNIQUE_CARRIER == carrier]
+        carrier_num = carrier_num['CIE'].values[0]
+        fly = fly.mask('CIE', carrier_num)
+    
+    #Remplacement des NaN
+    fly['CARRIER_DELAY'].fillna(0, inplace=True)
+    fly['WEATHER_DELAY'].fillna(0, inplace=True)
+    fly['NAS_DELAY'].fillna(0, inplace=True)
+    fly['SECURITY_DELAY'].fillna(0, inplace=True)
+    fly['LATE_AIRCRAFT_DELAY'].fillna(0, inplace=True)
+    
+    if fly.shape[0] == 0 :
+        return 0 , "Insuffisament de données pour prédire"
+    
+    #Données de prédiction
+    x_final = fly[['CARRIER_DELAY','WEATHER_DELAY', 'NAS_DELAY', 'SECURITY_DELAY', 'LATE_AIRCRAFT_DELAY',
+                  'DISTANCE', 'AIR_TIME',
+                  'CRS_ELAPSED_TIME','ACTUAL_ELAPSED_TIME',]]
+    
+    #Donnée à prédire
+    y_final = fly['ARR_DELAY'].values
+    
+    #Split Training / Test
+    x_train, x_test, y_train, y_test = train_test_split(x_final,y_final,test_size = 0.3,random_state = 0) # Do 70/30 split
+
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler() # create scaler object
+    scaler.fit(x_train) # fit with the training data ONLY
+    x_train = scaler.transform(x_train) # Transform the data
+    x_test = scaler.transform(x_test) # Transform the data
+    
+    #######
+    #Ridge#
+    #######
+    print("Ridge")
+    ridge = linear_model.Ridge(alpha=1)
+    ridge.fit(x_train, y_train)
+    print("ridge_Rcarre: " , ridge.score(x_test,y_test) )
+    print("ridge_erreur: " , np.mean((ridge.predict(x_test) - y_test) ** 2) )
+    print("ridge_rmse: " , np.sqrt(((y_test-ridge.predict(x_test))**2).sum()/len(y_test)) )
+    print("Prédiction d'avance/retard: " , int(ridge.predict(x_test)[0]) , " minutes " )
+    
+    return int(ridge.predict(x_test)[0]) , "prédiction sans erreur"
